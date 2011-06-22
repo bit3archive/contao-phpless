@@ -129,7 +129,6 @@ class PHPLessCss extends AbstractMinimizer
 			$this->log($e->getMessage(), 'PHPLessCss::minimize', TL_ERROR);
 			return false;
 		}
-		return true;
 	}
 }
 ?>
