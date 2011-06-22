@@ -31,6 +31,6 @@
 /**
  * Back end modules
  */
-$GLOBALS['TL_LANG']['MOD']['lesscss'] = array('PHP {less} CSS Compiler und Minimizer', 'PHP {less} CSS Compiler und Minimizer.');
+$GLOBALS['TL_LANG']['MOD']['phpless'] = array('PHP {less} CSS Compiler und Minimizer', 'PHP {less} CSS Compiler und Minimizer.');
 
 ?>
