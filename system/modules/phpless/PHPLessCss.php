@@ -36,6 +36,12 @@
 class PHPLessCss extends AbstractMinimizer
 {
 	/**
+	 * The import search directory.
+	 */
+	protected $strImportDir = '';
+	
+	
+	/**
 	 * load the jsmin class
 	 */
 	public function  __construct()
@@ -46,6 +52,24 @@ class PHPLessCss extends AbstractMinimizer
 		require_once(TL_ROOT . '/system/modules/phpless/lessc.inc.php');
 		
 		$this->import('CssUrlRemapper');
+	}
+	
+	
+	/**
+	 * Set the import search directory.
+	 */
+	public function setImportDir($strImportDir)
+	{
+		$this->strImportDir = $strImportDir;
+	}
+	
+	
+	/**
+	 * Get the import search directory.
+	 */
+	public function getImportDir()
+	{
+		return $this->strImportDir;
 	}
 
 	
@@ -68,6 +92,10 @@ class PHPLessCss extends AbstractMinimizer
 	{
 		try {
 			$objLessC = new lessc($strSource);
+			if ($this->strImportDir)
+			{
+				$objLessC->importDir = TL_ROOT . '/' . $this->strImportDir;
+			}
 			$strCode = $objLessC->parse();
 			
 			$objFile = new File($strTarget);
@@ -88,6 +116,10 @@ class PHPLessCss extends AbstractMinimizer
 	{
 		try {
 			$objLessC = new lessc($strSource);
+			if ($this->strImportDir)
+			{
+				$objLessC->importDir = TL_ROOT . '/' . $this->strImportDir;
+			}
 			return $objLessC->parse();
 		} catch(Exception $e) {
 			$this->log($e->getMessage(), 'PHPLessCss::minimize', TL_ERROR);
@@ -104,6 +136,10 @@ class PHPLessCss extends AbstractMinimizer
 	{
 		try {
 			$objLessC = new lessc();
+			if ($this->strImportDir)
+			{
+				$objLessC->importDir = TL_ROOT . '/' . $this->strImportDir;
+			}
 			$strCode = $objLessC->parse($strCode);
 			
 			$objFile = new File($strFile);
@@ -124,6 +160,10 @@ class PHPLessCss extends AbstractMinimizer
 	{
 		try {
 			$objLessC = new lessc();
+			if ($this->strImportDir)
+			{
+				$objLessC->importDir = TL_ROOT . '/' . $this->strImportDir;
+			}
 			return $objLessC->parse($strCode);
 		} catch(Exception $e) {
 			$this->log($e->getMessage(), 'PHPLessCss::minimize', TL_ERROR);
