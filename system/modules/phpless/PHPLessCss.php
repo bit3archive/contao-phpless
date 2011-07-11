@@ -28,6 +28,11 @@
  * @filesource
  */
 
+
+# include lessc
+require_once(TL_ROOT . '/system/modules/phpless/lessc.inc.php');
+
+
 /**
  * Class PHPLessCss
  *
@@ -47,9 +52,6 @@ class PHPLessCss extends AbstractMinimizer
 	public function  __construct()
 	{
 		parent::__construct();
-		
-		# include lessc
-		require_once(TL_ROOT . '/system/modules/phpless/lessc.inc.php');
 		
 		$this->import('CssUrlRemapper');
 	}
@@ -91,7 +93,7 @@ class PHPLessCss extends AbstractMinimizer
 	public function minimize($strSource, $strTarget)
 	{
 		try {
-			$objLessC = new lessc($strSource);
+			$objLessC = new lessc(TL_ROOT . '/' . $strSource);
 			if ($this->strImportDir)
 			{
 				$objLessC->importDir = TL_ROOT . '/' . $this->strImportDir;
@@ -100,6 +102,7 @@ class PHPLessCss extends AbstractMinimizer
 			
 			$objFile = new File($strTarget);
 			$objFile->write($strCode);
+			$objFile->close();
 		} catch(Exception $e) {
 			$this->log($e->getMessage(), 'PHPLessCss::minimize', TL_ERROR);
 			return false;
@@ -115,7 +118,7 @@ class PHPLessCss extends AbstractMinimizer
 	public function minimizeFromFile($strFile)
 	{
 		try {
-			$objLessC = new lessc($strSource);
+			$objLessC = new lessc(TL_ROOT . '/' . $strFile);
 			if ($this->strImportDir)
 			{
 				$objLessC->importDir = TL_ROOT . '/' . $this->strImportDir;
@@ -144,6 +147,7 @@ class PHPLessCss extends AbstractMinimizer
 			
 			$objFile = new File($strFile);
 			$objFile->write($strCode);
+			$objFile->close();
 		} catch(Exception $e) {
 			$this->log($e->getMessage(), 'PHPLessCss::minimize', TL_ERROR);
 			return false;
@@ -171,4 +175,5 @@ class PHPLessCss extends AbstractMinimizer
 		}
 	}
 }
+
 ?>

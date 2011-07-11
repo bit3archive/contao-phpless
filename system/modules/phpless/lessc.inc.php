@@ -43,6 +43,11 @@ class lessc {
 
 	public $importDisabled = false;
 	public $importDir = '';
+	
+	function instanciateCallback($strClass)
+	{
+		return (in_array('getInstance', get_class_methods($strClass))) ? call_user_func(array($strClass, 'getInstance')) : new $strClass();
+	}
 
 	// compile chunk off the head of buffer
 	function chunk() {
@@ -60,12 +65,55 @@ class lessc {
 					$value = array('list', ' ', array($value, array('keyword', '!important')));
 				}
 			}
-			$this->append($key, $value);
+			
+			$blnDoNotAppend = false;
+			
+			// HOOK: handle less property
+			if (isset($GLOBALS['TL_HOOKS']['lesscssHandleProperty']) && is_array($GLOBALS['TL_HOOKS']['lesscssHandleProperty']))
+			{
+				foreach ($GLOBALS['TL_HOOKS']['lesscssHandleProperty'] as $callback)
+				{
+					$objCallback = $this->instanciateCallback($callback[0]);
+					if ($objCallback->$callback[1]($key, $value, $this) === true)
+					{
+						$blnDoNotAppend = true;
+						break;
+					}
+				}
+			}
+			
+			if (!$blnDoNotAppend)
+			{
+				$this->append($key, $value);
+			}
 
 			if (count($this->env) == 1)
 				return $this->compileProperty($key, array($value))."\n";
 			else
 				return true;
+		} else {
+			$this->seek($s);
+		}
+
+		// a function
+		if ($this->keyword($key) && $this->literal('(') && $this->propertyValue($value) && $this->literal(')') && $this->end()) {
+			$blnHandled = false;
+			
+			// HOOK: handle less function
+			if (isset($GLOBALS['TL_HOOKS']['lesscssHandleFunction']) && is_array($GLOBALS['TL_HOOKS']['lesscssHandleFunction']))
+			{
+				foreach ($GLOBALS['TL_HOOKS']['lesscssHandleFunction'] as $callback)
+				{
+					$objCallback = $this->instanciateCallback($callback[0]);
+					if ($objCallback->$callback[1]($key, $value, $this) === true)
+					{
+						$blnHandled = true;
+						break;
+					}
+				}
+			}
+			
+			return $blnHandled;
 		} else {
 			$this->seek($s);
 		}
@@ -739,6 +787,20 @@ class lessc {
 	}
 
 	function compileValue($value) {
+		// HOOK: compile value
+		if (isset($GLOBALS['TL_HOOKS']['lesscssCompileValue']) && is_array($GLOBALS['TL_HOOKS']['lesscssCompileValue']))
+		{
+			foreach ($GLOBALS['TL_HOOKS']['lesscssCompileValue'] as $callback)
+			{
+				$objCallback = $this->instanciateCallback($callback[0]);
+				$strBuffer = $objCallback->$callback[1]($value, $this);
+				if ($strBuffer !== false)
+				{
+					return $strBuffer;
+				}
+			}
+		}
+		
 		switch($value[0]) {
 		case 'list':
 			// [1] - delimiter
@@ -802,6 +864,20 @@ class lessc {
 			// [1] - function name
 			// [2] - some value representing arguments
 
+			// HOOK: compile value
+			if (isset($GLOBALS['TL_HOOKS']['lesscssCompileFunction']) && is_array($GLOBALS['TL_HOOKS']['lesscssCompileFunction']))
+			{
+				foreach ($GLOBALS['TL_HOOKS']['lesscssCompileFunction'] as $callback)
+				{
+					$objCallback = $this->instanciateCallback($callback[0]);
+					$strBuffer = $objCallback->$callback[1]($value[1], $value[2], $this);
+					if ($strBuffer !== false)
+					{
+						return $strBuffer;
+					}
+				}
+			}
+			
 			// see if there is a library function for this func
 			$f = array($this, 'lib_'.$value[1]);
 			if (is_callable($f)) {
