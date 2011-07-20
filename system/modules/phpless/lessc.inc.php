@@ -105,7 +105,12 @@ class lessc {
 				foreach ($GLOBALS['TL_HOOKS']['lesscssHandleFunction'] as $callback)
 				{
 					$objCallback = $this->instanciateCallback($callback[0]);
-					if ($objCallback->$callback[1]($key, $value, $this) === true)
+					$varBuffer = $objCallback->$callback[1]($key, $value, $this);
+					if (is_string($varBuffer))
+					{
+						return $varBuffer;
+					}
+					if ($varBuffer === true)
 					{
 						$blnHandled = true;
 						break;
@@ -161,7 +166,7 @@ class lessc {
 			}
 
 			$this->push();
-			$this->set('__tags', $tags);	
+			$this->set('__tags', $tags);
 
 			return true;
 		} else {
@@ -1198,6 +1203,11 @@ class lessc {
 			}
 		}
 		return $env;
+	}
+	
+	// get last env
+	function getLastEnv() {
+		return end($this->env);
 	}
 
 	// merge a block into the current env
