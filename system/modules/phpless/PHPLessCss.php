@@ -93,16 +93,15 @@ class PHPLessCss extends AbstractMinimizer
 	public function minimize($strSource, $strTarget)
 	{
 		try {
-			$objLessC = new lessc(TL_ROOT . '/' . $strSource);
-			if ($this->strImportDir)
-			{
-				$objLessC->importDir = TL_ROOT . '/' . $this->strImportDir;
-			}
-			$strCode = $objLessC->parse();
-			
-			$objFile = new File($strTarget);
-			$objFile->write($strCode);
-			$objFile->close();
+            $objSource = new File($strSource);
+            $strCode = $objSource->getContent();
+            $objSource->close();
+
+			$strCode = $this->minimizeCode($strCode, $strSource);
+
+            $objTarget = new File($strTarget);
+            $objTarget->write($strCode);
+            $objTarget->close();
 		} catch(Exception $e) {
 			$this->log($e->getMessage(), 'PHPLessCss::minimize', TL_ERROR);
 			return false;
@@ -118,12 +117,11 @@ class PHPLessCss extends AbstractMinimizer
 	public function minimizeFromFile($strFile)
 	{
 		try {
-			$objLessC = new lessc(TL_ROOT . '/' . $strFile);
-			if ($this->strImportDir)
-			{
-				$objLessC->importDir = TL_ROOT . '/' . $this->strImportDir;
-			}
-			return $objLessC->parse();
+            $objSource = new File($strFile);
+            $strCode = $objSource->getContent();
+            $objSource->close();
+
+			return $this->minimizeCode($strCode, $strFile);
 		} catch(Exception $e) {
 			$this->log($e->getMessage(), 'PHPLessCss::minimize', TL_ERROR);
 			return false;
@@ -138,12 +136,7 @@ class PHPLessCss extends AbstractMinimizer
 	public function minimizeToFile($strFile, $strCode)
 	{
 		try {
-			$objLessC = new lessc();
-			if ($this->strImportDir)
-			{
-				$objLessC->importDir = TL_ROOT . '/' . $this->strImportDir;
-			}
-			$strCode = $objLessC->parse($strCode);
+			$strCode = $this->minimizeCode($strCode);
 			
 			$objFile = new File($strFile);
 			$objFile->write($strCode);
@@ -160,7 +153,7 @@ class PHPLessCss extends AbstractMinimizer
 	 * (non-PHPdoc)
 	 * @see Minimizer::minimizeCode($strCode)
 	 */
-	public function minimizeCode($strCode)
+	public function minimizeCode($strCode, $strSource = null)
 	{
 		try {
 			$objLessC = new lessc();
@@ -168,7 +161,19 @@ class PHPLessCss extends AbstractMinimizer
 			{
 				$objLessC->importDir = TL_ROOT . '/' . $this->strImportDir;
 			}
-			return $objLessC->parse($strCode);
+			$strCode = $objLessC->compile($strCode);
+
+            // HOOK: add custom logic
+            if (isset($GLOBALS['TL_HOOKS']['compileLess']) && is_array($GLOBALS['TL_HOOKS']['compileLess']))
+            {
+                foreach ($GLOBALS['TL_HOOKS']['compileLess'] as $callback)
+                {
+                    $this->import($callback[0]);
+                    $strCode = $this->$callback[0]->$callback[1]($strCode, $strSource);
+                }
+            }
+
+            return $strCode;
 		} catch(Exception $e) {
 			$this->log($e->getMessage(), 'PHPLessCss::minimize', TL_ERROR);
 			return false;
